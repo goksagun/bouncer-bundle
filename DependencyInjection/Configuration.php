@@ -37,6 +37,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('key')->isRequired()->cannotBeEmpty()->end()
                         ->scalarNode('secret')->isRequired()->cannotBeEmpty()->end()
                         ->scalarNode('region')->isRequired()->defaultValue('us-east-1')->cannotBeEmpty()->end()
+                        ->scalarNode('version')->isRequired()->defaultValue('latest')->cannotBeEmpty()->end()
                     ->end()
                 ->end()
                 ->arrayNode('bounce_endpoint')

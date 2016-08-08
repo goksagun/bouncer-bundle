@@ -1,8 +1,8 @@
 <?php
 namespace Shivas\BouncerBundle\Model;
 
-use Aws\Sns\MessageValidator\Message;
-use Aws\Sns\MessageValidator\MessageValidator;
+use Aws\Sns\Message;
+use Aws\Sns\MessageValidator;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Shivas\BouncerBundle\Service\AwsClientFactory;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,10 +41,11 @@ class SubscriptionConfirmationHandler implements BouncerHandlerInterface
         }
 
         try {
-            $data = json_decode($request->getContent(), true);
-            $message = Message::fromArray($data);
+            // Create a message from the post data and validate its signature
+            $message = Message::fromRawPostData();
             $validator = new MessageValidator();
-            $validator->isValid($message);
+            $validator->validate($message);
+            $data = $message->toArray();
         } catch (\Exception $e) {
             return 404;
         }

@@ -1,8 +1,8 @@
 <?php
 namespace Shivas\BouncerBundle\Model;
 
-use Aws\Sns\MessageValidator\Message;
-use Aws\Sns\MessageValidator\MessageValidator;
+use Aws\Sns\Message;
+use Aws\Sns\MessageValidator;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -35,10 +35,11 @@ class NotificationHandler implements BouncerHandlerInterface
         }
 
         try {
-            $data = json_decode($request->getContent(), true);
-            $message = Message::fromArray($data);
+            // Create a message from the post data and validate its signature
+            $message = Message::fromRawPostData();
             $validator = new MessageValidator();
             $validator->validate($message);
+            $data = $message->toArray();
         } catch (\Exception $e) {
             return 404; // not valid message, we return 404
         }
@@ -46,11 +47,9 @@ class NotificationHandler implements BouncerHandlerInterface
         if (isset($data['Message'])) {
             $message = json_decode($data['Message'], true);
             if (!is_null($message)) {
-
                 if (isset($message['notificationType']) && $message['notificationType'] == self::MESSAGE_TYPE_SUBSCRIPTION_SUCCESS) {
                     return 200;
                 }
-
                 if (isset($message['notificationType']) && $message['notificationType'] == self::MESSAGE_TYPE_BOUNCE)
                 {
                     foreach ($message['bounce']['bouncedRecipients'] as $bounceRecipient) {
@@ -63,10 +62,8 @@ class NotificationHandler implements BouncerHandlerInterface
                         } else {
                             $bounce = new Bounce($email, new \DateTime(), 1, ($message['bounce']['bounceType']=='Permanent'));
                         }
-
                         $this->repo->save($bounce);
                     }
-
                     return 200;
                 }
             }
